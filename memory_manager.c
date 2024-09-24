@@ -111,29 +111,3 @@ void mem_deinit() {
     memory_pool = NULL;
     free_list = NULL;
 }
-
-// Debug function: prints the memory blocks and their status
-//void mem_print_status() {
-//    BlockHeader* current = free_list;
-//    while (current != NULL) {
-//        printf("Block at %p, size: %zu, %s\n", current, current->size, current->free ? "free" : "allocated");
-//        current = current->next;
-//    }
-//}
-//
-//int main() {
-//    mem_init(1024);  // Initialize a 1KB memory pool
-//
-//    void* ptr1 = mem_alloc(100);
-//    void* ptr2 = mem_alloc(200);
-//    mem_print_status();
-//
-//    mem_free(ptr1);
-//    mem_print_status();
-//
-//    void* ptr3 = mem_resize(ptr2, 300);
-//    mem_print_status();
-//
-//    mem_deinit();
-//    return 0;
-//}

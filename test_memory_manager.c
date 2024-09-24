@@ -1,5 +1,5 @@
 #include "common_defs.h"
-#include "memorymanager.c"
+#include "memory_manager.c"
 
 void test_mem_init_deinit() {
     printf_yellow("Testing mem_init and mem_deinit...\n");
