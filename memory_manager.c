@@ -22,8 +22,8 @@ static BlockHeader* free_list = NULL;  // List of free/available blocks
 
 // Initialization function: creates a memory pool of the given size
 void mem_init(size_t size) {
-    size = ALIGN(size);  // Align the size
     memory_pool = malloc(size);  // Allocate memory pool
+    //size = ALIGN(size);  // Align the size
     if (memory_pool == NULL) {
         fprintf(stderr, "Failed to initialize memory pool.\n");
         exit(1);
@@ -49,12 +49,12 @@ void* mem_alloc(size_t size) {
     while (current != NULL) {
         if (current->free && current->size >= size) {
             // Split the block if it's larger than the requested size
-            if (current->size > size) {
-                BlockHeader* new_block = (BlockHeader*)((char*)current + size);
-                new_block->size = current->size - size;
+            if (current->size > size + sizeof(BlockHeader)) {
+                BlockHeader* new_block = (BlockHeader*)((char*)current + size + sizeof(BlockHeader));
+                new_block->size = current->size - size - sizeof(BlockHeader);
                 new_block->free = true;
                 new_block->next = current->next;
-                current->size = size;
+                current->size = size + sizeof(BlockHeader);
                 current->next = new_block;
             }
             current->free = false;
@@ -94,8 +94,13 @@ void* mem_resize(void* block, size_t size) {
         return mem_alloc(size);  // Allocate a new block
     }
 
+    if (size == 0) {
+        mem_free(block);
+        return NULL;  // Free the block
+    }
+
     BlockHeader* header = (BlockHeader*)((char*)block - sizeof(BlockHeader));
-    size = ALIGN(size);  // Align the size
+    //size = ALIGN(size);  // Align the size
     if (header->size >= size) {
         return block;  // No need to resize
     }
