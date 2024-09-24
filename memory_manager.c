@@ -3,6 +3,10 @@
 #include <string.h>
 #include <stdbool.h>
 
+// make test_mmanager
+// make run_test_mmanager
+// make clean
+
 typedef struct BlockHeader {
     size_t size;            // Size of the block (including header)
     bool free;              // Whether the block is free or allocated
