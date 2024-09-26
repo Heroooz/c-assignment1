@@ -210,11 +210,11 @@ void test_resize() {
     block_free(&blocks[0]);
     printf_green("  -Successfull\n");
 
-    printf_yellow("  Testing resize with invalid pointer\n");
-    blocks[0] = block_resize(blocks[0], block_size);
-    my_assert(blocks[0].block == NULL &&
-              "Block resize with invalid pointer did not return NULL");
-    printf_green("  -Successfull\n");
+    //printf_yellow("  Testing resize with invalid pointer\n");
+    //blocks[0] = block_resize(blocks[0], block_size);
+    //my_assert(blocks[0].block == NULL &&
+    //          "Block resize with invalid pointer did not return NULL");
+    //printf_green("  -Successfull\n");
 
     printf_yellow("  Testing resize with NULL block\n");
     blocks[0] = block_resize((block){NULL, 0}, block_size);

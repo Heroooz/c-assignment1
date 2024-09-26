@@ -28,7 +28,7 @@ void mem_init(size_t size) {
 // Allocation function: finds the first free block that fits the requested size
 void* mem_alloc(size_t size) {
     if (size == 0) {
-        return 69;  // No need to allocate zero bytes
+        return (void*)69;  // No need to allocate zero bytes
     }
 
     if (size > true_size) {
