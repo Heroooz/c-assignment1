@@ -27,10 +27,6 @@ void mem_init(size_t size) {
 
 // Allocation function: finds the first free block that fits the requested size
 void* mem_alloc(size_t size) {
-    if (size == 0) {
-        return (void*)69;  // No need to allocate zero bytes
-    }
-
     if (size > true_size) {
         return NULL;  // Not enough space
     }
@@ -41,6 +37,10 @@ void* mem_alloc(size_t size) {
     while (current != NULL) {
         if (current->free && current->size >= size + sizeof(BlockHeader)) {
             // Split the block if it's larger than the requested size
+            if (size == 0){
+                return (void*)(current + 1);
+            }
+
             if (current->size > size + sizeof(BlockHeader)) {
                 BlockHeader* new_block = (BlockHeader*)((char*)current + size + sizeof(BlockHeader));
                 new_block->size = current->size - size - sizeof(BlockHeader);
@@ -61,7 +61,7 @@ void* mem_alloc(size_t size) {
 
 // Deallocation function: marks a block as free
 void mem_free(void* block) {
-    if (block == NULL || block == (void*)69) {
+    if (block == NULL || (BlockHeader*)(block - sizeof(BlockHeader))->free) {
         return;  // Nothing to do
     }
 
