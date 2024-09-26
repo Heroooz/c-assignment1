@@ -61,7 +61,7 @@ void* mem_alloc(size_t size) {
 
 // Deallocation function: marks a block as free
 void mem_free(void* block) {
-    if (block == NULL || (BlockHeader*)(block - sizeof(BlockHeader))->free) {
+    if (block == NULL || ((BlockHeader*)(block - sizeof(BlockHeader)))->free) {
         return;  // Nothing to do
     }
 
