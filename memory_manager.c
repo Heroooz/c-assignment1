@@ -1,9 +1,9 @@
-#ifndef MEMORY_MANAGER_C
-#define MEMORY_MANAGER_C
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
+#include "memory_manager.h"
 
 // make test_mmanager
 // make run_test_mmanager
@@ -126,4 +126,3 @@ void mem_deinit() {
     memory_pool = NULL;
     free_list = NULL;
 }
-#endif // MEMORY_MANAGER_C

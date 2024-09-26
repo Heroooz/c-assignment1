@@ -1,5 +1,3 @@
-#ifndef LINKED_LIST_C
-#define LINKED_LIST_C
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h>
@@ -7,21 +5,17 @@
 #include <stdint.h> 
 
 #include "common_defs.h"
-#include "memory_manager.c"
-
-typedef struct Node {
-    struct Node* next; // A pointer to the next node in the List
-    uint16_t data; // Stores the data as an unsigned 16-bit integer
-} Node;
+#include "memory_manager.h"
+#include "linked_list.h"
 
 // Initialization function
-inline void list_init(Node** head, size_t size) {
+void list_init(Node** head, size_t size) {
     mem_init(size);
     *head = NULL;
 }
 
 // Insertion function: Adds a new node with the specified data to the linked list
-inline void list_insert(Node** head, uint16_t data) {
+void list_insert(Node** head, uint16_t data) {
     Node* new_node = (Node*)mem_alloc(sizeof(Node));
     if (new_node == NULL) {
         fprintf(stderr, "Failed to allocate memory for new node.\n");
@@ -42,7 +36,7 @@ inline void list_insert(Node** head, uint16_t data) {
 }
 
 // Insertion function: Inserts a new node with the specified data immediately after a given node
-inline void list_insert_after(Node* prev_node, uint16_t data) {
+void list_insert_after(Node* prev_node, uint16_t data) {
     if (prev_node == NULL) {
         fprintf(stderr, "The given previous node cannot be NULL.\n");
         return;
@@ -59,7 +53,7 @@ inline void list_insert_after(Node* prev_node, uint16_t data) {
 }
 
 // Insertion function: Inserts a new node with the specified data immediately before a given node
-inline void list_insert_before(Node** head, Node* next_node, uint16_t data) {
+void list_insert_before(Node** head, Node* next_node, uint16_t data) {
     if (next_node == NULL) {
         fprintf(stderr, "The given next node cannot be NULL.\n");
         return;
@@ -94,7 +88,7 @@ inline void list_insert_before(Node** head, Node* next_node, uint16_t data) {
 }
 
 // Deletion function: Removes a node with the specified data from the linked list
-inline void list_delete(Node** head, uint16_t data) {
+void list_delete(Node** head, uint16_t data) {
     if (*head == NULL) {
         fprintf(stderr, "The list is empty.\n");
         return;
@@ -123,7 +117,7 @@ inline void list_delete(Node** head, uint16_t data) {
 }
 
 // Search function: Searches for a node with the specified data and returns a pointer to it
-inline Node* list_search(Node** head, uint16_t data) {
+Node* list_search(Node** head, uint16_t data) {
     Node* current = *head;
     while (current != NULL) {
         if (current->data == data) {
@@ -135,7 +129,7 @@ inline Node* list_search(Node** head, uint16_t data) {
 }
 
 // Display function: Prints all the elements in the linked list
-inline void list_display(Node** head) {
+void list_display(Node** head) {
     Node* current = *head;
     printf("[");
     while (current != NULL) {
@@ -149,7 +143,7 @@ inline void list_display(Node** head) {
 }
 
 // Display function: Prints all elements of the list between two nodes
-inline void list_display_range(Node** head, Node* start_node, Node* end_node) {
+void list_display_range(Node** head, Node* start_node, Node* end_node) {
     Node* current = *head;
     bool in_range = (start_node == NULL);
 
@@ -173,7 +167,7 @@ inline void list_display_range(Node** head, Node* start_node, Node* end_node) {
 }
 
 // Nodes count function: Returns the count of nodes
-inline int list_count_nodes(Node** head) {
+int list_count_nodes(Node** head) {
     int count = 0;
     Node* current = *head;
     while (current != NULL) {
@@ -184,7 +178,7 @@ inline int list_count_nodes(Node** head) {
 }
 
 // Cleanup function: Frees all the nodes in the linked list
-inline void list_cleanup(Node** head) {
+void list_cleanup(Node** head) {
     Node* current = *head;
     while (current != NULL) {
         Node* next = current->next;
@@ -193,4 +187,3 @@ inline void list_cleanup(Node** head) {
     }
     *head = NULL;
 }
-#endif // LINKED_LIST_C

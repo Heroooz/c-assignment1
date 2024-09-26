@@ -1,8 +1,8 @@
-#include "linked_list.c"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
+#include "linked_list.h"
 #include "common_defs.h"
 
 // make test_list
