@@ -9,18 +9,8 @@
 // make run_test_mmanager
 // make clean
 
-typedef struct BlockHeader {
-    size_t size;            // Size of the block (including header)
-    bool free;              // Whether the block is free or allocated
-    struct BlockHeader* next; // Pointer to the next block in the memory pool
-} BlockHeader;
-
 static void* memory_pool = NULL;
 static BlockHeader* free_list = NULL;  // List of free/available blocks
-
-// Align memory to a multiple of this size (for better memory usage)
-#define ALIGNMENT 8
-#define ALIGN(size) (((size) + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1))
 
 // Initialization function: creates a memory pool of the given size
 void mem_init(size_t size) {
@@ -44,7 +34,6 @@ void* mem_alloc(size_t size) {
         return NULL;  // No need to allocate zero bytes
     }
 
-    size = ALIGN(size);  // Align the size
     BlockHeader* current = free_list;
 
     // Find the first free block that fits the requested size
