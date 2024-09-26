@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "stdio.h": "c",
-        "memory_manager.h": "c"
+        "memory_manager.h": "c",
+        "string.h": "c"
     }
 }
