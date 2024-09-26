@@ -2,6 +2,7 @@
     "files.associations": {
         "stdio.h": "c",
         "memory_manager.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "common_defs.h": "c"
     }
 }
