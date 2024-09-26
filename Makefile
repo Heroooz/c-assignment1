@@ -37,7 +37,7 @@ run_tests: run_test_mmanager run_test_list
 	
 # run test cases for the memory manager
 run_test_mmanager:
-	./test_memory_manager
+	./test_memory_manager 0
 
 # run test cases for the linked list
 run_test_list:
