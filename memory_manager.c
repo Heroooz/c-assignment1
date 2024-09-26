@@ -14,7 +14,7 @@ static BlockHeader* free_list = NULL;  // List of free/available blocks
 
 // Initialization function: creates a memory pool of the given size
 void mem_init(size_t size) {
-    memory_pool = malloc(size + 10 * sizeof(BlockHeader));  // Allocate memory pool
+    memory_pool = malloc(size + 4 * sizeof(BlockHeader));  // Allocate memory pool
     if (memory_pool == NULL) {
         fprintf(stderr, "Failed to initialize memory pool.\n");
         exit(1);
