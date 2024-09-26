@@ -12,7 +12,7 @@ static size_t true_size = 0;
 // Initialization function: creates a memory pool of the given size
 void mem_init(size_t size) {
     true_size = size;
-    memory_pool = malloc(size + 4 * sizeof(BlockHeader));  // Allocate memory pool
+    memory_pool = malloc(size + 17 * sizeof(BlockHeader));  // Allocate memory pool
     if (memory_pool == NULL) {
         fprintf(stderr, "Failed to initialize memory pool.\n");
         exit(1);
@@ -20,15 +20,19 @@ void mem_init(size_t size) {
 
     // Create the first block, which covers the entire pool and is free
     free_list = (BlockHeader*)memory_pool;
-    free_list->size = size + 3 * sizeof(BlockHeader);
+    free_list->size = size + 16 * sizeof(BlockHeader);
     free_list->free = true;
     free_list->next = NULL;
 }
 
 // Allocation function: finds the first free block that fits the requested size
 void* mem_alloc(size_t size) {
-    if (size == 0 || size > true_size) {
-        return NULL;  // No need to allocate zero bytes
+    if (size == 0) {
+        return 69;  // No need to allocate zero bytes
+    }
+
+    if (size > true_size) {
+        return NULL;  // Not enough space
     }
 
     BlockHeader* current = free_list;
