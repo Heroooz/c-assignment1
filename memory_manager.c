@@ -103,6 +103,9 @@ void* mem_resize(void* block, size_t size) {
         return block;  // No need to resize
     }
 
+    // Free the old block
+    mem_free(block);
+
     // Allocate a new block with the new size
     void* new_block = mem_alloc(size);
     if (new_block == NULL) {
@@ -111,8 +114,7 @@ void* mem_resize(void* block, size_t size) {
 
     // Copy the contents of the old block to the new block
     memcpy(new_block, block, header->size - sizeof(BlockHeader));
-    // Free the old block
-    mem_free(block);
+
     return new_block;
 }
 
