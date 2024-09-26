@@ -8,6 +8,13 @@
 #include "memory_manager.h"
 #include "linked_list.h"
 
+//export LD_LIBRARY_PATH=.
+
+//make clean
+//make test_list
+//make run_test_list
+
+
 // Initialization function
 void list_init(Node** head, size_t size) {
     mem_init(size + size * sizeof(BlockHeader) / sizeof(Node));
@@ -139,7 +146,7 @@ void list_display(Node** head) {
             printf(", ");
         }
     }
-    printf("]\n");
+    printf("]");
 }
 
 // Display function: Prints all elements of the list between two nodes
@@ -163,7 +170,7 @@ void list_display_range(Node** head, Node* start_node, Node* end_node) {
         }
         current = current->next;
     }
-    printf("]\n");
+    printf("]");
 }
 
 // Nodes count function: Returns the count of nodes

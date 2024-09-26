@@ -41,7 +41,7 @@ run_test_mmanager:
 
 # run test cases for the linked list
 run_test_list:
-	./test_linked_list
+	./test_linked_list 0
 
 # Clean target to clean up build files
 clean:
