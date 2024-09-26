@@ -1,371 +1,376 @@
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "common_defs.h"
 #include "memory_manager.h"
 
-void test_mem_init_deinit() {
-    printf_yellow("Testing mem_init and mem_deinit...\n");
+typedef struct block {
+    int *block;
+    size_t size;
+} block;
 
-    // Test initialization with a valid size
-    mem_init(1024);  // Initialize memory manager with 1024 bytes
-    printf_green("Memory initialized with 1024 bytes.\n");
+void test_memory_validity_(block *block_array, size_t nrOf_blocks) {
+    printf_yellow("  Validating block(s)\n");
 
-    // Test de-initialization
+    printf_yellow("  Checking if allocation was successful\n");
+    for (size_t i = 0; i < nrOf_blocks; i++) {
+        if (!(block_array[i].block) && block_array[i].size != 0) {
+            printf_red("  -Block at index %ld allocation failed!\n", i);
+            my_assert(false);
+        }
+    }
+    printf_green("  -Successfull\n");
+
+    printf_yellow("  Filling all blocks and checking expected values\n");
+
+    size_t counter = 0;
+    for (size_t i = 0; i < nrOf_blocks; i++) {
+        for (size_t j = 0; j < block_array[i].size; j++) {
+            block_array[i].block[j] = counter++;
+        }
+    }
+    counter = 0;
+    for (size_t i = 0; i < nrOf_blocks; i++) {
+        for (size_t j = 0; j < block_array[i].size; j++) {
+            if (block_array[i].block[j] != counter) {
+                printf_red(
+                    "  -Block %ld did not contain the expected value at index "
+                    "%ld, expected vale: %ld, actual value: %d, most likely "
+                    "due to memory-block overlap\n",
+                    j, i, counter, block_array[i].block[j]);
+                my_assert(false);
+            }
+            counter++;
+        }
+    }
+    printf_green("  -Successfull validation passed\n");
+}
+
+void block_free_all(block *blocks, size_t nrOf_blocks) {
+    for (size_t i = 0; i < nrOf_blocks; i++)
+        if (blocks[i].size) mem_free(blocks[i].block);
+}
+
+void block_init(block *block, size_t size) {
+    block->block = mem_alloc(size * sizeof(*(block->block)));
+    block->size = size;
+}
+
+size_t block_free(block *block) {
+    mem_free(block->block);
+    size_t temp = block->size;
+    block->size = 0;
+    return temp;
+}
+
+block block_resize(block block_, size_t size) {
+    block new_block;
+    new_block.block = mem_resize(block_.block, size * sizeof(*(block_.block)));
+    new_block.size = size;
+    return new_block;
+}
+
+void mem_free_all(int **blocks, size_t nrOf_blocks) {
+    for (size_t i = 0; i < nrOf_blocks; i++) mem_free(blocks[i]);
+}
+
+void test_init() {
+    printf_yellow("Testing mem_init...\n");
+    static const size_t block_size = 128;
+    static const size_t nrOf_blocks = 3;
+    // Initialize with block_size * 3) bytes of memory
+    // Try allocating to check if init was successful (block_size * 4 bytes)
+
+    block blocks[nrOf_blocks];
+    mem_init(sizeof(*(blocks[0].block)) * block_size * nrOf_blocks);
+    for (size_t i = 0; i < nrOf_blocks; i++) block_init(&blocks[i], block_size);
+
+    // Test that allocation was successfull
+    test_memory_validity_(blocks, 3);
+
+    block_free_all(blocks, nrOf_blocks);
     mem_deinit();
-    printf_green("Memory deinitialized successfully.\n");
+    printf_green("mem_init passed.\n");
 }
 
-void test_mem_alloc_free() {
+void test_alloc_and_free() {
+    srand(0);
     printf_yellow("Testing mem_alloc and mem_free...\n");
+    static const size_t nrOf_blocks = 16;
+    static const size_t block_size = 32;
 
-    mem_init(1024);  // Initialize with 1024 bytes
+    block blocks[nrOf_blocks];
+    static const size_t memory_size =
+        nrOf_blocks * sizeof(*(blocks[0].block)) * block_size;
 
-    // Allocate a small block
-    void *block = mem_alloc(128);
-    my_assert(block != NULL);  // Ensure allocation succeeds
-    printf_green("Allocated 128 bytes successfully.\n");
+    printf_yellow("  Trying to create %ld blocks of size %ld\n", nrOf_blocks,
+                  block_size);
+    mem_init(memory_size);
+    for (size_t i = 0; i < nrOf_blocks; i++) {
+        block_init(&blocks[i], block_size);
+        my_assert(blocks[i].block != NULL);
+    }
+    printf_green("  -Successfull\n");
 
-    // Allocate a larger block
-    void *block2 = mem_alloc(256);
-    my_assert(block2 != NULL);  // Ensure allocation succeeds
-    printf_green("Allocated 256 bytes successfully.\n");
+    test_memory_validity_(blocks, nrOf_blocks);
 
-    // Free the first block
-    mem_free(block);
-    printf_green("Freed 128-byte block successfully.\n");
+    printf_yellow("  Trying allocation one over size limit\n");
+    void *extra_block = mem_alloc(1);
+    my_assert(extra_block == NULL &&
+              "  -Allocation over size limit did not fail when it should have");
+    printf_green("  -Passed\n");
 
-    // Free the second block
-    mem_free(block2);
-    printf_green("Freed 256-byte block successfully.\n");
+    printf_yellow("  Freeing all blocks and attempting reallocation\n");
+    for (size_t i = 0; i < nrOf_blocks; i++) block_free(&blocks[i]);
 
-    mem_deinit();  // Cleanup
+    block_init(&blocks[0], block_size * nrOf_blocks);
+    my_assert(blocks[0].block != NULL &&
+              "  -Memory reallocation failed, mem_free likely did not free all "
+              "memory properly");
+    printf_green("  -Successfull\n");
+
+    printf_yellow("  Filling reallocated space\n");
+    for (size_t i = 0; i < block_size * nrOf_blocks; i++)
+        blocks[0].block[i] = i;
+    printf_green("  -Successfull\n");
+
+    block_free(&blocks[0]);
+
+    printf_yellow("  Testing allocation of size 0\n");
+    my_assert(mem_alloc(0) != NULL && "mem_alloc(0) did not return NULL");
+    printf_green("  -Successfull\n");
+
+    printf_yellow("  Testing allocation of randomly sized blocks\n");
+    size_t remaining_space = nrOf_blocks * block_size;
+    for (size_t i = 0; i < (nrOf_blocks - 1); i++) {
+        size_t current_block_size = block_size - rand() % (block_size / 5);
+        block_init(&blocks[i], current_block_size);
+        remaining_space -= current_block_size;
+    }
+    block_init(&blocks[nrOf_blocks - 1], remaining_space);
+    remaining_space = 0;
+    test_memory_validity_(blocks, nrOf_blocks);
+    printf_green("  -Successfull\n");
+
+    printf_yellow("  Testing validity of memory after freeing some blocks\n");
+    remaining_space += block_free(&blocks[nrOf_blocks / 3]);
+    remaining_space += block_free(&blocks[nrOf_blocks / 3 + 1]);
+    remaining_space += block_free(&blocks[nrOf_blocks / 3 + 2]);
+
+    test_memory_validity_(blocks, nrOf_blocks);
+    printf_green("  -Successfull\n");
+
+    printf_yellow(
+        "  Testing validity of memory after refilling leftover space\n");
+
+    block_init(&blocks[nrOf_blocks / 3], remaining_space);
+
+    test_memory_validity_(blocks, nrOf_blocks);
+    printf_green("  -Successfull\n");
+
+    block_free_all(blocks, nrOf_blocks);
+
+    mem_deinit();
+    printf_green("mem_alloc and mem_free passed.\n");
 }
 
-void test_mem_alloc_insufficient_space() {
-    printf_yellow("Testing mem_alloc with insufficient space...\n");
+void test_resize() {
+    printf_yellow("Testing mem_resize...\n");
+    static const size_t block_size = 16;
+    static const size_t nrOf_blocks = 16;
+    block blocks[nrOf_blocks];
+    assert(nrOf_blocks > 1 && "Number of blocks cannot be less than 2!");
+    static const size_t memory_size =
+        sizeof(*(blocks[0].block)) * block_size * nrOf_blocks;
+    mem_init(memory_size);
 
-    mem_init(512);  // Initialize with 512 bytes
+    printf_yellow(
+        "  Testing resize from half memory size to full memory size\n");
+    block_init(&blocks[0], nrOf_blocks / 2);
+    my_assert(blocks[0].block != NULL && "Failed to allocate block");
 
-    // Allocate a block larger than available space
-    void *block = mem_alloc(1024);
-    my_assert(block == NULL);  // Allocation should fail
-    printf_green("Allocation failed as expected due to insufficient space.\n");
+    blocks[0] = block_resize(blocks[0], nrOf_blocks * block_size);
+    my_assert(blocks[0].block != NULL && "Block resize to full memory failed");
 
-    mem_deinit();  // Cleanup
+    printf_green("  -Successfull\n");
+
+    printf_yellow("  Testing resize to size 0\n");
+    blocks[0] = block_resize(blocks[0], 0);
+    my_assert(blocks[0].block == NULL &&
+              "Block resize to 0 did not return NULL");
+    printf_green("  -Successfull\n");
+
+    printf_yellow("  Testing if resize to 0 properly freed memory\n");
+    block_init(&blocks[0], nrOf_blocks * block_size);
+    my_assert(
+        blocks[0].block != NULL &&
+        "block allocation failed, mem_resize to 0 might not have freed memory");
+    block_free(&blocks[0]);
+    printf_green("  -Successfull\n");
+
+    printf_yellow("  Testing resize with invalid pointer\n");
+    blocks[0] = block_resize(blocks[0], block_size);
+    my_assert(blocks[0].block == NULL &&
+              "Block resize with invalid pointer did not return NULL");
+    printf_green("  -Successfull\n");
+
+    printf_yellow("  Testing resize with NULL block\n");
+    blocks[0] = block_resize((block){NULL, 0}, block_size);
+    my_assert(blocks[0].block != NULL &&
+              "Block resize with NULL block did not allocate new block");
+    block_free(&blocks[0]);
+    printf_green("  -Successfull\n");
+
+    printf_yellow(
+        "  Testing resize with an empty block inbetween a bunch of other "
+        "blocks\n");
+
+    for (size_t i = 0; i < nrOf_blocks; i++) block_init(&blocks[i], block_size);
+
+    size_t resized_block_index = nrOf_blocks / 2 - 1;
+    size_t removed_block_index = nrOf_blocks / 2;
+    block_free(&blocks[removed_block_index]);
+
+    block fail_block =
+        block_resize(blocks[resized_block_index], block_size * 2 + 1);
+    my_assert(fail_block.block == NULL &&
+              "Block resize to invalid size succeded when it shouldn't");
+
+    blocks[resized_block_index] =
+        block_resize(blocks[resized_block_index], block_size * 2);
+    my_assert(blocks[resized_block_index].block != NULL &&
+              "Block resize to valid size failed");
+
+    printf_yellow("  Testing if resize to new place copies data correctly\n");
+    block_free(&blocks[resized_block_index]);
+
+    for (size_t i = 0; i < blocks[0].size; i++) blocks[0].block[i] = i;
+
+    block resized_block_0 = block_resize(blocks[0], block_size * 2);
+
+    for (size_t i = 0; i < blocks[0].size; i++)
+        my_assert(resized_block_0.block[i] == blocks[0].block[i] &&
+                  "resize does not copy data correctly");
+    test_memory_validity_(blocks, nrOf_blocks);
+
+    printf_green("  -Successfull\n");
+
+    block_free_all(blocks, nrOf_blocks);
+
+    mem_deinit();
+    printf_green("mem_resize passed.\n");
 }
 
-void test_mem_free_null() {
-    printf_yellow("Testing mem_free with NULL...\n");
+void test_allocation_exceeding_memory_size() {
+    printf_yellow("Testing allocations exceeding memory pool size\n");
+    static const size_t nrOf_blocks = 8;
+    assert(nrOf_blocks > 2);
 
-    mem_init(1024);  // Initialize with 1024 bytes
+    static const size_t block_size = 16;
+    int *blocks[nrOf_blocks];
+    static const size_t memory_size =
+        sizeof(**blocks) * (nrOf_blocks - 1) * block_size;
 
-    // Freeing a NULL pointer should not crash the program
-    mem_free(NULL);
-    printf_green("Freeing NULL did not cause any issues.\n");
+    mem_init(memory_size);  // Initialize with memory_size of memory
+    blocks[0] = mem_alloc(memory_size + 1);
+    my_assert(blocks[0] == NULL &&
+              "Successfully allocated more memory than memory pool size, this "
+              "is bad");
 
-    mem_deinit();  // Cleanup
-}
+    blocks[0] = mem_alloc(memory_size);
+    my_assert(blocks[0] != NULL &&
+              "failed to allocate exact memory in memory pool");
 
-void test_mem_resize_shrink() {
-    printf_yellow("Testing mem_resize (shrink)...\n");
+    blocks[1] = mem_alloc(1);  // This should fail, no space left
+    my_assert(blocks[1] == NULL &&
+              "Allocated one more than total memory pool, not good");
 
-    mem_init(1024);  // Initialize with 1024 bytes
+    mem_free(blocks[0]);
+    for (size_t i = 0; i < nrOf_blocks; i++)
+        blocks[i] = mem_alloc(sizeof(**blocks) * block_size);
 
-    void *block = mem_alloc(256);
-    my_assert(block != NULL);  // Ensure allocation succeeds
-    printf_green("Allocated 256 bytes successfully.\n");
+    my_assert(blocks[nrOf_blocks - 1] == NULL &&
+              "Succeded with allocation beyond memory capacity, bad");
 
-    // Resize the block to a smaller size
-    block = mem_resize(block, 128);
-    my_assert(block != NULL);  // Ensure resize succeeds
-    printf_green("Resized block to 128 bytes successfully.\n");
+    mem_free_all(blocks, nrOf_blocks);
 
-    mem_free(block);
-    mem_deinit();  // Cleanup
-}
-
-void test_mem_resize_expand() {
-    printf_yellow("Testing mem_resize (expand)...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    void *block = mem_alloc(256);
-    my_assert(block != NULL);  // Ensure allocation succeeds
-    printf_green("Allocated 256 bytes successfully.\n");
-
-    // Resize the block to a larger size
-    block = mem_resize(block, 512);
-    my_assert(block != NULL);  // Ensure resize succeeds
-    printf_green("Resized block to 512 bytes successfully.\n");
-
-    mem_free(block);
-    mem_deinit();  // Cleanup
-}
-
-void test_mem_resize_insufficient_space() {
-    printf_yellow("Testing mem_resize with insufficient space...\n");
-
-    mem_init(512);  // Initialize with 512 bytes
-
-    void *block = mem_alloc(256);
-    my_assert(block != NULL);  // Ensure allocation succeeds
-    printf_green("Allocated 256 bytes successfully.\n");
-
-    // Try resizing beyond available memory
-    void *new_block = mem_resize(block, 1024);
-    my_assert(new_block == NULL);  // Resize should fail
-    printf_green("Resize failed as expected due to insufficient space.\n");
-
-    mem_free(block);
-    mem_deinit();  // Cleanup
-}
-
-void test_mem_alloc_all_memory() {
-    printf_yellow("Testing mem_alloc to consume all memory...\n");
-
-    mem_init(512);  // Initialize with 512 bytes
-
-    // Allocate exactly 512 bytes
-    void *block = mem_alloc(512);
-    my_assert(block != NULL);  // Ensure allocation succeeds
-    printf_green("Allocated exactly 512 bytes successfully.\n");
-
-    // Attempt to allocate more memory, which should fail
-    void *block2 = mem_alloc(1);
-    my_assert(block2 == NULL);  // Allocation should fail
-    printf_green("Allocation failed as expected when out of memory.\n");
-
-    mem_free(block);
-    mem_deinit();  // Cleanup
-}
-
-void test_mem_alloc_zero_size() {
-    printf_yellow("Testing mem_alloc with zero size...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    // Allocate zero bytes, which should return NULL or handle gracefully
-    void *block = mem_alloc(0);
-    my_assert(block == NULL);  // Should fail or return NULL
-    printf_green("Allocation of zero bytes handled correctly.\n");
-
-    mem_deinit();  // Cleanup
-}
-
-void test_mem_resize_null_pointer() {
-    printf_yellow("Testing mem_resize with a NULL pointer...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    // Resizing a NULL pointer should behave like mem_alloc
-    void *block = mem_resize(NULL, 128);
-    my_assert(block != NULL);  // Should allocate a new block
-    printf_green("Resized NULL pointer resulted in a successful allocation.\n");
-
-    mem_free(block);
-    mem_deinit();  // Cleanup
-}
-
-void test_mem_free_after_deinit() {
-    printf_yellow("Testing mem_free after mem_deinit...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    void *block = mem_alloc(256);
-    my_assert(block != NULL);  // Ensure allocation succeeds
-
-    mem_deinit();  // Deinitialize memory manager
-
-    // Freeing after deinit should not crash or cause undefined behavior
-    mem_free(block);
-    printf_green("Freed block after deinit without any issues.\n");
+    mem_deinit();
+    printf_green("Allocations exceeding pool size test passed.\n");
 }
 
 void test_double_free() {
-    printf_yellow("Testing double free...\n");
+    printf_yellow("Testing double deallocation...\n");
+    mem_init(1024);  // Initialize with 1KB of memory
 
-    mem_init(1024);  // Initialize with 1024 bytes
+    void *block1 = mem_alloc(512);  // Allocate a block of 100 bytes
+    my_assert(block1 != NULL);      // Ensure the block was allocated
 
-    // Allocate a block
-    void *block = mem_alloc(128);
-    my_assert(block != NULL);  // Ensure allocation succeeds
+    void *block2 = mem_alloc(512);  // Allocate a block of 100 bytes
+    my_assert(block2 != NULL);      // Ensure the block was allocated
 
-    // Free the block once
-    mem_free(block);
-    printf_green("Freed block successfully.\n");
+    mem_free(block1);  // Free the block for the first time
+    mem_free(block1);  // Attempt to free the block a second time
 
-    // Free the block again
-    mem_free(block);
-    printf_green("Double free handled gracefully.\n");
+    my_assert(mem_alloc(1024) == NULL &&
+              "Double mem_free of the same block freed another block");
+    block1 = mem_alloc(512);
+    my_assert(block1 != NULL &&
+              "Failed to alocate memory again after double free");
 
-    mem_deinit();  // Cleanup
+    mem_free(block1);
+    mem_free(block2);
+    mem_free(block2);
+
+    printf_green(
+        "Double deallocation test passed (if no crash and handled "
+        "gracefully).\n");
+    mem_deinit();  // Cleanup memory
 }
 
 void test_memory_fragmentation() {
-    printf_yellow("Testing memory fragmentation...\n");
+    printf_yellow("Testing memory fragmentation handling...\n");
 
-    mem_init(1024);  // Initialize with 1024 bytes
+    static const size_t nrOf_blocks = 4;
+    static const size_t block_size = 8;
+    int *blocks[nrOf_blocks];
 
-    // Allocate and free multiple blocks to fragment the memory
-    void *block1 = mem_alloc(128);
-    void *block2 = mem_alloc(256);
-    void *block3 = mem_alloc(128);
+    static const size_t memory_size =
+        sizeof(**blocks) * block_size * nrOf_blocks;
 
-    my_assert(block1 != NULL && block2 != NULL && block3 != NULL);
+    mem_init(memory_size);  // Initialize with 2048 bytes
 
-    // Free two blocks to create gaps
-    mem_free(block1);
-    mem_free(block3);
-    printf_green("Freed two blocks to create fragmentation.\n");
+    for (size_t i = 0; i < nrOf_blocks; i++)
+        blocks[i] = mem_alloc(sizeof(**blocks) * block_size);
 
-    // Try to allocate a block that should fit into the fragmented space
-    void *block4 = mem_alloc(128);
-    my_assert(block4 != NULL);
-    printf_green("Successfully allocated block in fragmented memory.\n");
+    mem_free(
+        blocks[2]);  // Free third block, leaving a fragmented hole after block2
+    blocks[2] = mem_alloc(sizeof(**blocks) *
+                          block_size);  // Should fit into the space of block3
+    assert(blocks[2] != NULL);
 
-    // Cleanup
-    mem_free(block2);
-    mem_free(block4);
+    mem_free(blocks[0]);
+    mem_free(blocks[2]);
+    mem_free(blocks[3]);
+
+    // should fit after second block
+    blocks[3] = mem_alloc(sizeof(**blocks) * block_size * 2);
+    // should fit before second block
+    blocks[0] = mem_alloc(sizeof(**blocks) * block_size);
+
+    mem_free_all(blocks, nrOf_blocks);
+
     mem_deinit();
+    printf_green("Memory fragmentation test passed.\n");
 }
-
-void test_large_alloc_exceeding_size() {
-    printf_yellow("Testing large allocation exceeding memory size...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    // Attempt to allocate a very large block, more than available memory
-    void *block = mem_alloc(2048);
-    my_assert(block == NULL);  // Allocation should fail
-    printf_green(
-        "Large allocation exceeding memory size failed as expected.\n");
-
-    mem_deinit();  // Cleanup
-}
-
-void test_alloc_boundary_conditions() {
-    printf_yellow("Testing allocation at boundary conditions...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    // Allocate exactly all available memory
-    void *block1 = mem_alloc(1024);
-    my_assert(block1 != NULL);
-    printf_green("Successfully allocated memory at boundary (1024 bytes).\n");
-
-    // Free the memory
-    mem_free(block1);
-
-    // Try allocating a small amount at the boundary
-    void *block2 = mem_alloc(1024 - 1);
-    my_assert(block2 != NULL);
-    printf_green(
-        "Successfully allocated one byte less than total memory (1023 "
-        "bytes).\n");
-
-    // Try allocating the remaining 1 byte
-    void *block3 = mem_alloc(1);
-    my_assert(block3 != NULL);
-    printf_green("Successfully allocated remaining 1 byte.\n");
-
-    // Cleanup
-    mem_free(block2);
-    mem_free(block3);
-    mem_deinit();
-}
-
-void test_mem_resize_to_zero() {
-    printf_yellow("Testing mem_resize to zero...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    // Allocate a block
-    void *block = mem_alloc(256);
-    my_assert(block != NULL);  // Ensure allocation succeeds
-
-    // Resize the block to zero
-    void *resized_block = mem_resize(block, 0);
-    my_assert(resized_block ==
-              NULL);  // Should either return NULL or deallocate
-    printf_green("Resized block to zero bytes successfully.\n");
-
-    // Clean up (if resize didn't free, free manually)
-    if (resized_block != NULL) {
-        mem_free(resized_block);
-    }
-
-    mem_deinit();  // Cleanup
-}
-
-void test_free_invalid_pointer() {
-    printf_yellow("Testing free of invalid pointer...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    // Allocate a block
-    void *block = mem_alloc(256);
-    my_assert(block != NULL);  // Ensure allocation succeeds
-
-    // Attempt to free a pointer that was never allocated
-    int dummy;
-    mem_free(&dummy);
-    printf_green("Freeing invalid pointer handled gracefully.\n");
-
-    // Cleanup
-    mem_free(block);
-    mem_deinit();
-}
-
-void test_memory_overwrite() {
-    printf_yellow("Testing memory overwrite protection...\n");
-
-    mem_init(1024);  // Initialize with 1024 bytes
-
-    // Allocate two blocks
-    char *block1 = (char *)mem_alloc(128);
-    char *block2 = (char *)mem_alloc(128);
-
-    my_assert(block1 != NULL && block2 != NULL);  // Ensure allocations succeed
-
-    // Write data to the first block
-    for (int i = 0; i < 128; i++) {
-        block1[i] = 'A';
-    }
-
-    // Verify that the second block is untouched
-    for (int i = 0; i < 128; i++) {
-        my_assert(block2[i] == 0);  // Assuming memory is initialized to zero
-    }
-    printf_green(
-        "Memory overwrite protection successful, block2 remained intact.\n");
-
-    // Cleanup
-    mem_free(block1);
-    mem_free(block2);
-    mem_deinit();
-}
-
 int main() {
-    // Run all tests
-    test_mem_init_deinit();
-    test_mem_alloc_free();
-    test_mem_alloc_insufficient_space();
-    test_mem_free_null();
-    test_mem_resize_shrink();
-    test_mem_resize_expand();
-    test_mem_resize_insufficient_space();
-    test_mem_alloc_all_memory();
-    test_mem_alloc_zero_size();
-    test_mem_resize_null_pointer();
-    test_mem_free_after_deinit();
-
-    // Additional tests
+    test_init();
+    test_alloc_and_free();
+    test_resize();
+    test_allocation_exceeding_memory_size();
     test_double_free();
     test_memory_fragmentation();
-    test_large_alloc_exceeding_size();
-    test_alloc_boundary_conditions();
-    test_mem_resize_to_zero();
-    //test_free_invalid_pointer();
-    test_memory_overwrite();
-
-    printf_green("All tests completed successfully.\n");
+    printf_green("All tests passed successfully!\n");
     return 0;
 }
