@@ -22,7 +22,7 @@ void mem_init(size_t size) {
 
     // Create the first block, which covers the entire pool and is free
     free_list = (BlockHeader*)memory_pool;
-    free_list->size = size;
+    free_list->size = size + 3 * sizeof(BlockHeader);
     free_list->free = true;
     free_list->next = NULL;
 }
@@ -44,7 +44,7 @@ void* mem_alloc(size_t size) {
                 new_block->size = current->size - size - sizeof(BlockHeader);
                 new_block->free = true;
                 new_block->next = current->next;
-                current->size = size + sizeof(BlockHeader);
+                current->size = size;
                 current->next = new_block;
             }
             current->free = false;
