@@ -37,7 +37,7 @@ void* mem_alloc(size_t size) {
 
     // Find the first free block that fits the requested size
     while (current != NULL) {
-        if (current->free && current->size >= size) {
+        if (current->free && current->size >= size + sizeof(BlockHeader)) {
             // Split the block if it's larger than the requested size
             if (current->size > size + sizeof(BlockHeader)) {
                 BlockHeader* new_block = (BlockHeader*)((char*)current + size + sizeof(BlockHeader));
