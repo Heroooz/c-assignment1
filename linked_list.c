@@ -1,3 +1,5 @@
+#ifndef LINKED_LIST_C
+#define LINKED_LIST_C
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h>
@@ -191,3 +193,4 @@ void list_cleanup(Node** head) {
     }
     *head = NULL;
 }
+#endif // LINKED_LIST_C

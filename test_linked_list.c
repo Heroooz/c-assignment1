@@ -5,6 +5,10 @@
 
 #include "common_defs.h"
 
+// make test_list
+// make run_test_list
+// make clean
+
 // Function to capture stdout output.
 void capture_stdout(char *buffer, size_t size, void (*func)(Node **, Node *, Node *), Node **head, Node *start_node, Node *end_node)
 {

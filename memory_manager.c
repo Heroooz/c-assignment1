@@ -1,3 +1,5 @@
+#ifndef MEMORY_MANAGER_C
+#define MEMORY_MANAGER_C
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -124,3 +126,4 @@ void mem_deinit() {
     memory_pool = NULL;
     free_list = NULL;
 }
+#endif // MEMORY_MANAGER_C
