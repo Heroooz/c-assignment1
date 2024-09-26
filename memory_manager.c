@@ -5,10 +5,6 @@
 
 #include "memory_manager.h"
 
-// make test_mmanager
-// make run_test_mmanager
-// make clean
-
 static void* memory_pool = NULL;
 static BlockHeader* free_list = NULL;  // List of free/available blocks
 static size_t true_size = 0;
