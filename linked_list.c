@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h> 
-#include <stddef.h>
 
 #include "common_defs.h"
 #include "memory_manager.h"
