@@ -1,8 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h> 
+#include <stdlib.h> 
 #include <string.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include <stdint.h> 
+
+#include "common_defs.h"
+#include "memory_manager.c"
 
 typedef struct Node {
     struct Node* next; // A pointer to the next node in the List
