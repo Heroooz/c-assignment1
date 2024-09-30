@@ -35,26 +35,31 @@ void* mem_alloc(size_t size) {
     if (size == 0) {
         return memory_pool;  // Return the start of the memory pool
     }
-    
-    if (size > size_of_pool) {
-        return NULL;  // Cannot allocate zero bytes or more than the pool size
-    }
 
+    size_t amount_of_empty_space = 0;
+    bool block_free = true;
     // Find the first free block that fits the requested size
-    for (size_t i = 0; i <= size_of_pool - size; i++) {
-        bool block_free = true;
-        size_t amount_of_empty_space = 0;
+    for (size_t i = 0; i < size_of_pool; i++) {
         if (get_bit(start, i)) {
             block_free = false;
         }
 
-        amount_of_empty_space++;
+        if (block_free){
+            amount_of_empty_space++;
+        }
+        else{
+            amount_of_empty_space = 0;
+        }
 
         if (amount_of_empty_space == size) {
             // Mark the block as used
             set_bit(end, i);
             set_bit(start, i + 1 - size);
             return (void*)((unsigned char*)memory_pool + i + 1 - size);
+        }
+        
+        if (get_bit(end, i)) {
+            block_free = true;
         }
     }
 
