@@ -57,7 +57,7 @@ void* mem_alloc(size_t size) {
             set_bit(start, i + 1 - size);
             return (void*)((unsigned char*)memory_pool + i + 1 - size);
         }
-        
+
         if (get_bit(end, i)) {
             block_free = true;
         }

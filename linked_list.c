@@ -8,13 +8,6 @@
 #include "memory_manager.h"
 #include "linked_list.h"
 
-//export LD_LIBRARY_PATH=.
-
-//make clean
-//make test_list
-//make run_test_list
-
-
 // Initialization function
 void list_init(Node** head, size_t size) {
     mem_init(size);
