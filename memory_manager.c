@@ -32,26 +32,29 @@ void mem_init(size_t size) {
 
 // Allocation function: finds the first free block that fits the requested size
 void* mem_alloc(size_t size) {
-    if (size == 0 || size > size_of_pool) {
+    if (size == 0) {
+        return memory_pool;  // Return the start of the memory pool
+    }
+    
+    if (size > size_of_pool) {
         return NULL;  // Cannot allocate zero bytes or more than the pool size
     }
 
     // Find the first free block that fits the requested size
     for (size_t i = 0; i <= size_of_pool - size; i++) {
         bool block_free = true;
-        for (size_t j = 0; j < size; j++) {
-            if (get_bit(start, i + j)) {
-                block_free = false;
-                break;
-            }
+        size_t amount_of_empty_space = 0;
+        if (get_bit(start, i)) {
+            block_free = false;
         }
 
-        if (block_free) {
+        amount_of_empty_space++;
+
+        if (amount_of_empty_space == size) {
             // Mark the block as used
-            for (size_t j = 0; j < size; j++) {
-                set_bit(start, i + j);
-            }
-            return (void*)((unsigned char*)memory_pool + i);
+            set_bit(end, i);
+            set_bit(start, i + 1 - size);
+            return (void*)((unsigned char*)memory_pool + i + 1 - size);
         }
     }
 
@@ -90,7 +93,7 @@ void* mem_resize(void* block, size_t size) {
 
     // Find the size of the current block
     size_t current_size = 0;
-    for (size_t i = offset; i < size_of_pool && start[i] == 1; i++) {
+    for (size_t i = offset; i < size_of_pool && get_bit(start, i); i++) {
         current_size++;
     }
     if (current_size >= size) {
