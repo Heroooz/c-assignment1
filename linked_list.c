@@ -17,7 +17,7 @@
 
 // Initialization function
 void list_init(Node** head, size_t size) {
-    mem_init(size + size * sizeof(BlockHeader) / sizeof(Node));
+    mem_init(size);
     *head = NULL;
 }
 
