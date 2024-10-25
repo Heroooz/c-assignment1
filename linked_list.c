@@ -5,7 +5,6 @@
 #include <stdint.h> 
 #include <pthread.h>
 
-#include "common_defs.h"
 #include "memory_manager.h"
 #include "linked_list.h"
 

@@ -451,3 +451,12 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+void test_exceed_single_allocation()
+{
+    printf_yellow(" Testing allocation exceeding pool size ---> ");
+    mem_init(1024);                // Initialize with 1KB of memory
+    void *block = mem_alloc(2048); // Try allocating more than available
+    my_assert(block == NULL);      // Allocation should fail
+    mem_deinit();
+    printf_green("[PASS].\n");
+}
