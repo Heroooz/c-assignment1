@@ -1,11 +1,3 @@
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <string.h>
-#include <stdbool.h>
-#include <stdint.h> 
-#include <pthread.h>
-
-#include "memory_manager.h"
 #include "linked_list.h"
 
 pthread_mutex_t list_mutex;
