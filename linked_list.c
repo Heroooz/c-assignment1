@@ -4,11 +4,9 @@ pthread_mutex_t list_mutex;
 
 // Initialization function
 void list_init(Node** head, size_t size) {
-    pthread_mutex_init(&list_mutex, NULL);
-    pthread_mutex_lock(&list_mutex);
     mem_init(size);
     *head = NULL;
-    pthread_mutex_unlock(&list_mutex);
+    pthread_mutex_init(&list_mutex, NULL);
 }
 
 // Insertion function: Adds a new node with the specified data to the linked list
@@ -202,13 +200,7 @@ int list_count_nodes(Node** head) {
 
 // Cleanup function: Frees all the nodes in the linked list
 void list_cleanup(Node** head) {
-    pthread_mutex_lock(&list_mutex);
-    Node* current = *head;
-    while (current != NULL) {
-        Node* next = current->next;
-        mem_free(current);
-        current = next;
-    }
     *head = NULL;
-    pthread_mutex_unlock(&list_mutex);
+    mem_deinit();
+    pthread_mutex_destroy(&list_mutex);
 }
